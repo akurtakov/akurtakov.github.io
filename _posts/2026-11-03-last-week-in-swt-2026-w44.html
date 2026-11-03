@@ -1,0 +1,64 @@
+---
+layout: post
+title: "Last week in SWT (October 26 - November 1, 2026)"
+date: 2026-11-03 12:00:00 +0200
+tags: [Eclipse, SWT, GTK]
+---
+
+
+<p>Here is what I wrote or reviewed in SWT that got merged during the week of October 26 - November 1, 2026. Most of it is GTK4 again: drag and drop is now usable in the EGit Staging view, and GLCanvas finally works on Wayland. The screenshots show the commit before the change next to the change itself, both running on GTK4 under Wayland unless noted otherwise.</p>
+
+<h3>GLCanvas on Wayland and GTK4</h3>
+<ul>
+<li>GLCanvas used GLX and an X11 child window, so it failed on Wayland and called GTK3-only API on GTK4. It now uses a GtkGLArea there, and GTK3 on X11 keeps GLX. GDK only creates core profile contexts, so code using the fixed function pipeline needs shaders (or <code>GDK_GL=legacy</code> on GTK3) (<a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3779">PR 3779</a>)</li>
+<li>Snippet195 and Snippet341 now draw with vertex buffers and shaders, so they run with both the new GLCanvas and on macOS (<a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3779">PR 3779</a>)</li>
+</ul>
+<p><b>GTK4:</b></p>
+<div class="separator"><img src="/images/last-week-in-swt/2026-w44/swt-w44-3779.png" alt="GLCanvas on GTK4: before, the constructor fails with UnsatisfiedLinkError gtk_widget_get_window; after, a shaded triangle is rendered" /></div>
+<p><b>GTK3 on Wayland:</b></p>
+<div class="separator"><img src="/images/last-week-in-swt/2026-w44/swt-w44-3779-gtk3.png" alt="GLCanvas on GTK3 Wayland: before, SWTException Unsupported color depth; after, the triangle is rendered" /></div>
+
+<h3>Drag and drop on GTK4</h3>
+<ul>
+<li>Show the dragged rows of a Tree, Table or List as the drag image instead of GTK's generic icon. It is drawn at the widget's scale, so it stays sharp on HiDPI (<a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3776">PR 3776</a>)</li>
+</ul>
+<div class="separator"><img src="/images/last-week-in-swt/2026-w44/swt-w44-3776.png" alt="Dragging three selected table rows: before, a generic drag cursor; after, the three rows follow the pointer" /></div>
+<ul>
+<li>Keep a multi selection when you drag one of its rows. GtkTreeView selected only the pressed row on the press, so only that row was dragged (<a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3772">PR 3772</a>)</li>
+</ul>
+<div class="separator"><img src="/images/last-week-in-swt/2026-w44/swt-w44-3772.png" alt="Before: pressing a selected row drops the selection to that row and only it is dropped; after: all three rows stay selected and are dropped" /></div>
+<ul>
+<li>Offer drag transfers that send no data. JFace's LocalSelectionTransfer keeps the selection in Java, so dragging from unstaged to staged changes in EGit did nothing (<a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3765">PR 3765</a>)</li>
+</ul>
+<ul>
+<li>Give an image from <code>Image.gtk_new()</code> the size of its surface, so <code>getBounds()</code> of the drag images is no longer 0x0 (<a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3775">PR 3775</a>)</li>
+</ul>
+
+<h3>Popups and Trees on GTK4</h3>
+<ul>
+<li>Send Activate and Deactivate to ON_TOP child shells, which are GtkPopovers on GTK4. GTK hid such a popup on an outside click, but SWT never told the application, so a popup that disposes itself on Deactivate stayed alive. Now it gets the event and closes properly (<a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3766">PR 3766</a>)</li>
+</ul>
+<ul>
+<li>Turn off GtkTreeView's search for Trees, Tables and Lists without search (NO_SEARCH, VIRTUAL). Typing used to print <code>Gtk-CRITICAL: gtk_css_node_insert_after: assertion 'previous_sibling == NULL || previous_sibling-&gt;parent == parent' failed</code> (<a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3767">PR 3767</a>)</li>
+<li>GTK 4.8 is now the minimum, and Display warns at runtime if GTK is older (<a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3778">PR 3778</a>)</li>
+</ul>
+
+<h3>Reviewed and merged contributions</h3>
+<ul>
+<li>Navigate Tree rows with Left and Right as on Windows, on GTK3 and GTK4: Right on an expanded row moves to its first child, and Left on a leaf moves to its parent (by anydoby, <a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3744">PR 3744</a>)</li>
+</ul>
+<ul>
+<li>Hook the real <code>unrealize</code> signal for Widget.UNREALIZE. It was hooked to <code>realize</code>, which crashed JFace dialogs with a native TabFolder on GTK 3.24.44 to 3.24.49 without ibus (by openaudible, <a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3754">PR 3754</a>)</li>
+<li>Skip <code>Control.setBackground</code> when the colour is unchanged. This saves about 42 ms per 1000 controls on GTK3 when a theme switch re-applies colours (by vogella, <a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3736">PR 3736</a>)</li>
+<li>Declare six WebKitGTK natives <code>void</code>, as the C functions are (by GreenFuze, <a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3774">PR 3774</a>)</li>
+<li>Drop the unused className parameter of <code>SWT_AWT.initFrame</code> and deprecate <code>SWT_AWT.embeddedFrameClass</code> for removal (by GreenFuze, <a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3719">PR 3719</a>)</li>
+<li>The Display asyncExec test now asserts that its runnable actually runs, on the UI thread (by vogella, <a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3745">PR 3745</a>)</li>
+</ul>
+
+<h3>Build and tools</h3>
+<ul>
+<li>Install the WebKitGTK 4.1 runtime instead of webkit2gtk-driver, which is gone in Ubuntu 26.04 (<a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3764">PR 3764</a>)</li>
+<li>Remove the "Generating" message from the JNI generator (<a href="https://github.com/eclipse-platform/eclipse.platform.swt/pull/3773">PR 3773</a>)</li>
+</ul>
+
+<p>All of this is in the current I-builds (natives v4975r20). Please give GTK4 (<code>SWT_GTK4=1</code>) and Wayland a try and report what breaks for you.</p>

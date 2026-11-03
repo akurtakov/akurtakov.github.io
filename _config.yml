@@ -1,0 +1,12 @@
+title: Aleksandar Kurtakov
+description: Eclipse, SWT and GTK
+author: Aleksandar Kurtakov
+url: https://akurtakov.github.io
+theme: minima
+github_username: akurtakov
+show_excerpts: true
+minima:
+  social_links:
+    github: akurtakov
+exclude:
+  - README.md
